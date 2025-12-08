@@ -128,6 +128,70 @@ async function main() {
   console.log("\n🎉 Deployment and update complete!");
   console.log("📍 Contract Address:", contractAddress);
   
+  // Auto-assign roles to admin addresses
+  console.log("\n👥 Auto-assigning roles...");
+  try {
+    const [deployer] = await hre.ethers.getSigners();
+    const votingArtifact = require('../artifacts/contracts/Voting.sol/Voting.json');
+    const contract = new hre.ethers.Contract(contractAddress, votingArtifact.abi, deployer);
+    
+    // Get role identifiers
+    const ADMIN_ROLE = await contract.ADMIN_ROLE();
+    const ELECTION_MANAGER_ROLE = await contract.ELECTION_MANAGER_ROLE();
+    
+    // Admin addresses to grant roles
+    const adminAddresses = [
+      "0x8DCe2D8519e84481060A2955A8D2d9217C493363" // Add your admin addresses here
+    ];
+    
+    const managerAddresses = [
+      // Add election manager addresses here if needed
+    ];
+    
+    // Assign ADMIN_ROLE
+    for (const adminAddr of adminAddresses) {
+      if (!hre.ethers.utils.isAddress(adminAddr)) {
+        console.log(`⚠️  Invalid admin address: ${adminAddr}`);
+        continue;
+      }
+      
+      const hasRole = await contract.hasRole(ADMIN_ROLE, adminAddr);
+      if (!hasRole) {
+        console.log(`   Assigning ADMIN_ROLE to ${adminAddr.substring(0, 6)}...${adminAddr.substring(38)}`);
+        const tx = await contract.grantRole(ADMIN_ROLE, adminAddr);
+        await tx.wait();
+        console.log(`   ✅ ADMIN_ROLE assigned (TX: ${tx.hash.substring(0, 10)}...)`);
+      } else {
+        console.log(`   ✓ Already has ADMIN_ROLE: ${adminAddr.substring(0, 6)}...${adminAddr.substring(38)}`);
+      }
+    }
+    
+    // Assign ELECTION_MANAGER_ROLE
+    for (const managerAddr of managerAddresses) {
+      if (!hre.ethers.utils.isAddress(managerAddr)) {
+        console.log(`⚠️  Invalid manager address: ${managerAddr}`);
+        continue;
+      }
+      
+      const hasRole = await contract.hasRole(ELECTION_MANAGER_ROLE, managerAddr);
+      if (!hasRole) {
+        console.log(`   Assigning ELECTION_MANAGER_ROLE to ${managerAddr.substring(0, 6)}...${managerAddr.substring(38)}`);
+        const tx = await contract.grantRole(ELECTION_MANAGER_ROLE, managerAddr);
+        await tx.wait();
+        console.log(`   ✅ ELECTION_MANAGER_ROLE assigned (TX: ${tx.hash.substring(0, 10)}...)`);
+      } else {
+        console.log(`   ✓ Already has ELECTION_MANAGER_ROLE: ${managerAddr.substring(0, 6)}...${managerAddr.substring(38)}`);
+      }
+    }
+    
+    console.log("✅ Role assignment complete!");
+  } catch (roleError) {
+    console.log("⚠️  Role assignment encountered an issue (non-blocking):");
+    console.log("   " + roleError.message);
+    console.log("   You can manually assign roles later using:");
+    console.log("   npx hardhat run scripts/assign-roles.js --network sepolia");
+  }
+  
   // Auto-commit and push to GitHub for Vercel deployment
   console.log("\n🔄 Pushing changes to GitHub...");
   try {
