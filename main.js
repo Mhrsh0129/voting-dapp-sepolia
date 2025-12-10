@@ -1,5 +1,5 @@
 let WALLET_CONNECTED = "";
-let contractAddress = "0x1b8FAfe4cb6454d3091C305A145ECb1EE9A6BbF2"; // Enhanced contract with new features
+let contractAddress = "0x864769bC7313569b76Dc0C381DD3adffBCe67571"; // Enhanced contract with new features
 window.contractAddress = contractAddress; // Expose to window for QR manager
 let currentElectionName = "Current Election"; // Track which election we're viewing
 let configLoaded = false; // Track if config has been loaded
@@ -502,6 +502,7 @@ window.connectMetamask = async() => {
     // Get signer and address
     const signer = ethersProvider.getSigner();
     WALLET_CONNECTED = await signer.getAddress();
+    window.userAddress = WALLET_CONNECTED; // Expose for Face Verification
     
     console.log(`✅ Connected with ${walletType}:`, WALLET_CONNECTED);
     

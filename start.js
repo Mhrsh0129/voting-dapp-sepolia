@@ -134,12 +134,46 @@ function startServer() {
       console.log("\n📝 Press Ctrl+C to stop the server");
       console.log("=".repeat(60));
       
-      // Auto-open browser disabled - uncomment below to re-enable
-      // console.log("\n🚀 Opening live website in browser...");
-      // await openBrowser('https://vot-eth.vercel.app');
-      
       resolve(server);
     }, 2000);
+  });
+}
+
+// Function to start the Face Verification Service
+function startFaceService() {
+  return new Promise((resolve, reject) => {
+    console.log("\n▶️  Starting Face Verification Service (Python)...");
+    console.log("-".repeat(60));
+    
+    const faceServiceDir = path.join(__dirname, 'face-service');
+    // Use the virtual environment python
+    const venvPython = path.join(faceServiceDir, 'venv', 'Scripts', 'python.exe');
+    
+    // Check if venv exists
+    if (!fs.existsSync(venvPython)) {
+        console.warn("⚠️  Python virtual environment not found at " + venvPython);
+        console.warn("Attempting to run using system 'python'...");
+    }
+    
+    const cmd = fs.existsSync(venvPython) ? venvPython : 'python';
+    
+    const server = spawn(cmd, ['main.py'], {
+      cwd: faceServiceDir,
+      shell: true,
+      stdio: 'inherit'
+    });
+    
+    server.on('error', (err) => {
+      console.error('❌ Face Service error:', err);
+      // Don't reject, just warn, so main app still starts
+      resolve(null);
+    });
+    
+    // Give it a moment to start
+    setTimeout(() => {
+        console.log("✅ Face Verification Service started! (http://localhost:8000)");
+        resolve(server);
+    }, 3000);
   });
 }
 
@@ -163,7 +197,10 @@ async function start() {
     console.log("\n🚀 Deploying contract and updating addresses...");
     await runCommand('npx', ['hardhat', 'run', 'scripts/deploy-and-update.js', '--network', 'sepolia'], __dirname, { ELECTION_DURATION: duration.toString() });
     
-    // Step 5: Start the server
+    // Step 5: Start the Face Service (Background)
+    await startFaceService();
+
+    // Step 6: Start the Main Server
     await startServer();
     
   } catch (error) {
