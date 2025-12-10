@@ -1,0 +1,374 @@
+/**
+ * VotEth Face Verification Styles
+ * Professional styling for face capture and verification UI
+ */
+
+/* Container */
+.face-verification-container {
+    background: var(--card-bg, #1a3a5c);
+    border-radius: 16px;
+    padding: 24px;
+    margin: 20px auto;
+    max-width: 500px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color, #FFD700);
+}
+
+/* Header */
+.face-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.face-header h3 {
+    color: var(--accent-color, #FFD700);
+    margin: 0 0 8px 0;
+    font-size: 1.5rem;
+}
+
+/* Status messages */
+.face-status {
+    font-size: 0.95rem;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin: 0;
+}
+
+.face-status-info {
+    color: #87CEEB;
+    background: rgba(135, 206, 235, 0.1);
+}
+
+.face-status-success {
+    color: #00FF7F;
+    background: rgba(0, 255, 127, 0.1);
+}
+
+.face-status-warning {
+    color: #FFD700;
+    background: rgba(255, 215, 0, 0.1);
+}
+
+.face-status-error {
+    color: #FF6B6B;
+    background: rgba(255, 107, 107, 0.1);
+}
+
+/* Camera section */
+.face-camera-section {
+    position: relative;
+    margin: 20px 0;
+}
+
+.face-video-container {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+    aspect-ratio: 4/3;
+}
+
+.face-video-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1); /* Mirror for selfie view */
+}
+
+/* Face guide overlay */
+.face-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.face-guide {
+    width: 200px;
+    height: 260px;
+    border: 3px dashed rgba(255, 215, 0, 0.6);
+    border-radius: 50% 50% 45% 45%;
+    position: relative;
+}
+
+.face-guide::after {
+    content: 'Position face here';
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+/* Controls */
+.face-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.face-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.face-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.face-btn-primary {
+    background: linear-gradient(135deg, #1a73e8, #4285f4);
+    color: white;
+}
+
+.face-btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #1557b0, #3367d6);
+    transform: translateY(-2px);
+}
+
+.face-btn-success {
+    background: linear-gradient(135deg, #00c853, #00e676);
+    color: #000;
+}
+
+.face-btn-success:hover:not(:disabled) {
+    background: linear-gradient(135deg, #00a844, #00c853);
+    transform: translateY(-2px);
+}
+
+.face-btn-secondary {
+    background: linear-gradient(135deg, #FFD700, #FFC107);
+    color: #000;
+}
+
+.face-btn-secondary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #e6c200, #FFD700);
+    transform: translateY(-2px);
+}
+
+.face-btn-danger {
+    background: linear-gradient(135deg, #dc3545, #e74c3c);
+    color: white;
+}
+
+.face-btn-danger:hover:not(:disabled) {
+    background: linear-gradient(135deg, #c82333, #dc3545);
+    transform: translateY(-2px);
+}
+
+/* Result messages */
+.face-result {
+    display: none;
+    padding: 16px;
+    border-radius: 10px;
+    margin: 16px 0;
+    text-align: center;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.face-result-success {
+    background: linear-gradient(135deg, rgba(0, 200, 83, 0.2), rgba(0, 230, 118, 0.1));
+    border: 1px solid #00c853;
+    color: #00FF7F;
+}
+
+.face-result-error {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.2), rgba(231, 76, 60, 0.1));
+    border: 1px solid #dc3545;
+    color: #FF6B6B;
+}
+
+.face-result-warning {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 193, 7, 0.1));
+    border: 1px solid #FFD700;
+    color: #FFD700;
+}
+
+/* Info section */
+.face-info {
+    text-align: center;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    margin-top: 16px;
+}
+
+.face-info small {
+    color: var(--secondary-text, #D3DAD9);
+    line-height: 1.6;
+}
+
+/* Processing animation */
+@keyframes faceProcessing {
+    0% { border-color: rgba(255, 215, 0, 0.3); }
+    50% { border-color: rgba(255, 215, 0, 0.8); }
+    100% { border-color: rgba(255, 215, 0, 0.3); }
+}
+
+.face-video-container.processing .face-guide {
+    animation: faceProcessing 1s infinite;
+}
+
+/* Light theme adjustments */
+body.light-theme .face-verification-container {
+    background: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .face-status-info {
+    color: #1a73e8;
+    background: rgba(26, 115, 232, 0.1);
+}
+
+body.light-theme .face-info {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+body.light-theme .face-info small {
+    color: #5f6368;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .face-verification-container {
+        padding: 16px;
+        margin: 10px;
+        border-radius: 12px;
+    }
+    
+    .face-video-container {
+        max-width: 100%;
+    }
+    
+    .face-guide {
+        width: 150px;
+        height: 195px;
+    }
+    
+    .face-controls {
+        flex-direction: column;
+    }
+    
+    .face-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Modal for face verification */
+.face-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.face-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.face-modal {
+    background: var(--card-bg, #1a3a5c);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 520px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+    border: 2px solid var(--accent-color, #FFD700);
+}
+
+.face-modal-overlay.active .face-modal {
+    transform: scale(1);
+}
+
+.face-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--text-color, #fff);
+    font-size: 24px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.face-modal-close:hover {
+    opacity: 1;
+}
+
+/* Face Verification Badge (voting section) */
+.face-verification-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(220, 53, 69, 0.1));
+    border: 1px solid #FF6B6B;
+    border-radius: 10px;
+    margin: 16px 0;
+    color: #FF6B6B;
+    font-size: 0.95rem;
+}
+
+.face-verification-badge.verified {
+    background: linear-gradient(135deg, rgba(0, 200, 83, 0.2), rgba(0, 230, 118, 0.1));
+    border-color: #00c853;
+    color: #00FF7F;
+}
+
+.face-verification-badge .badge-icon {
+    font-size: 1.2rem;
+}
+
+.face-verification-badge .badge-text {
+    font-weight: 500;
+}
+
+/* Light theme */
+body.light-theme .face-verification-badge {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(231, 76, 60, 0.05));
+}
+
+body.light-theme .face-verification-badge.verified {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(0, 200, 83, 0.05));
+    color: #28a745;
+    border-color: #28a745;
+}

@@ -1,5 +1,5 @@
 let WALLET_CONNECTED = "";
-let contractAddress = "0xcCe1e4Cd00Dd9c6f039eD0480b70a224688E2C78"; // Enhanced contract with new features
+let contractAddress = "0x1b8FAfe4cb6454d3091C305A145ECb1EE9A6BbF2"; // Enhanced contract with new features
 window.contractAddress = contractAddress; // Expose to window for QR manager
 let currentElectionName = "Current Election"; // Track which election we're viewing
 let configLoaded = false; // Track if config has been loaded

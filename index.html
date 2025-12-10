@@ -864,6 +864,10 @@
     
     <!-- Chatbot Styles -->
     <link rel="stylesheet" href="css/chatbot.css">
+    
+    <!-- Face Verification -->
+    <link rel="stylesheet" href="css/face-verification.css">
+    <script src="js/face-verification.js" defer></script>
 
 </head>
 <body>
@@ -1013,10 +1017,19 @@
         <p id="time" style="font-size: 20px; color: #D3DAD9;"></p>
     </div>
 
+    <!-- Face Verification Section -->
+    <div class="container" id="faceVerificationSection" style="display: none;">
+        <div id="faceVerificationContainer"></div>
+    </div>
+
     <div class="container">
         <span data-i18n="voting.title">Vote here</span>
+        <div id="faceVerificationStatus" class="face-verification-badge" style="display: none;">
+            <span class="badge-icon">🔒</span>
+            <span class="badge-text">Face verification required before voting</span>
+        </div>
         <input type = "number" id ="vote" data-i18n=" " placeholder="Add Index of the Voter ... ">
-        <button onclick="addVote()" data-i18n="voting.submit">Add Vote</button>
+        <button onclick="addVote()" id="voteButton" data-i18n="voting.submit">Add Vote</button>
         <p id="cand"></p>
     </div>
 
@@ -1130,5 +1143,114 @@
 			document.getElementById('qrModal').classList.remove('active');
 		}
 	</script>
+    
+    <!-- Face Verification Integration -->
+    <script>
+        // Face Verification Manager instance
+        let faceVerificationManager = null;
+        let isFaceVerificationEnabled = true; // Set to false to disable
+        
+        // Initialize face verification after wallet connects
+        function initFaceVerification() {
+            if (!isFaceVerificationEnabled) {
+                document.getElementById('faceVerificationSection').style.display = 'none';
+                return;
+            }
+            
+            // Show face verification section
+            document.getElementById('faceVerificationSection').style.display = 'block';
+            document.getElementById('faceVerificationStatus').style.display = 'block';
+            
+            // Initialize manager
+            faceVerificationManager = new FaceVerificationManager({
+                apiUrl: 'http://localhost:8000', // Face service URL
+                onVerified: function(result) {
+                    console.log('✅ Face verified:', result);
+                    // Update UI to show verified status
+                    const badge = document.getElementById('faceVerificationStatus');
+                    badge.innerHTML = `
+                        <span class="badge-icon">✅</span>
+                        <span class="badge-text">Face verified! (${result.score.toFixed(1)}% match) - Token valid for ${Math.round(result.expiresIn / 60)} min</span>
+                    `;
+                    badge.classList.add('verified');
+                },
+                onError: function(error) {
+                    console.error('Face verification error:', error);
+                },
+                onStatusChange: function(message, type) {
+                    console.log(`Face status [${type}]: ${message}`);
+                }
+            });
+            
+            // Initialize UI
+            faceVerificationManager.init('faceVerificationContainer');
+            
+            // Check for existing valid token
+            if (faceVerificationManager.hasValidToken()) {
+                const badge = document.getElementById('faceVerificationStatus');
+                badge.innerHTML = `
+                    <span class="badge-icon">✅</span>
+                    <span class="badge-text">Face already verified - You can vote!</span>
+                `;
+                badge.classList.add('verified');
+            }
+        }
+        
+        // Check face verification before voting
+        function checkFaceVerification() {
+            if (!isFaceVerificationEnabled) return true;
+            
+            if (faceVerificationManager && faceVerificationManager.hasValidToken()) {
+                return true;
+            }
+            return false;
+        }
+        
+        // Override addVote to require face verification
+        const originalAddVote = window.addVote;
+        window.addVote = async function() {
+            if (isFaceVerificationEnabled && !checkFaceVerification()) {
+                const cand = document.getElementById("cand");
+                cand.innerHTML = "🔐 Please complete face verification before voting!";
+                cand.style.color = "#FFD700";
+                
+                // Scroll to face verification section
+                document.getElementById('faceVerificationSection').scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                return;
+            }
+            
+            // Proceed with original vote function
+            return originalAddVote.apply(this, arguments);
+        };
+        
+        // Initialize when wallet connects (hook into main.js)
+        const originalConnectMetamask = window.connectMetamask;
+        if (originalConnectMetamask) {
+            window.connectMetamask = async function() {
+                const result = await originalConnectMetamask.apply(this, arguments);
+                
+                // Wait a moment for wallet connection to complete
+                setTimeout(() => {
+                    if (window.WALLET_CONNECTED) {
+                        initFaceVerification();
+                    }
+                }, 1000);
+                
+                return result;
+            };
+        }
+        
+        // Also check on page load if wallet is already connected
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (window.WALLET_CONNECTED) {
+                    initFaceVerification();
+                }
+            }, 2000);
+        });
+    </script>
 </body>
 </html>
