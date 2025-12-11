@@ -1197,36 +1197,19 @@
         }
         
         // Check face verification before voting
-        function checkFaceVerification() {
+        window.checkFaceVerification = function() {
             if (!isFaceVerificationEnabled) return true;
             
             if (faceVerificationManager && faceVerificationManager.hasValidToken()) {
                 return true;
             }
             return false;
-        }
-        
-        // Override addVote to require face verification
-        const originalAddVote = window.addVote;
-        window.addVote = async function() {
-            if (isFaceVerificationEnabled && !checkFaceVerification()) {
-                const cand = document.getElementById("cand");
-                cand.innerHTML = "🔐 Please complete face verification before voting!";
-                cand.style.color = "#FFD700";
-                
-                // Scroll to face verification section
-                document.getElementById('faceVerificationSection').scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'center'
-                });
-                return;
-            }
-            
-            // Proceed with original vote function
-            return originalAddVote.apply(this, arguments);
         };
         
-        // Initialize when wallet connects (hook into main.js)
+        // Expose enabled flag
+        window.isFaceVerificationEnabled = isFaceVerificationEnabled;
+
+
         const originalConnectMetamask = window.connectMetamask;
         if (originalConnectMetamask) {
             window.connectMetamask = async function() {

@@ -1,5 +1,5 @@
 let WALLET_CONNECTED = "";
-let contractAddress = "0x3496258F81DF9f21eCc3F04dd92CA6399E40C4d4"; // Enhanced contract with new features
+let contractAddress = "0x365deF5aaB505678217B1FAdeBA692E55083845f"; // Enhanced contract with new features
 window.contractAddress = contractAddress; // Expose to window for QR manager
 let currentElectionName = "Current Election"; // Track which election we're viewing
 let configLoaded = false; // Track if config has been loaded
@@ -773,6 +773,21 @@ window.getCandidateNames = async() => {
 
 // Make globally accessible for HTML onclick
 window.addVote = async() => {
+    // Face Verification Check
+    if (window.checkFaceVerification && !window.checkFaceVerification()) {
+        const cand = document.getElementById("cand");
+        cand.innerHTML = "🔐 Please complete face verification before voting!";
+        cand.style.color = "#FFD700";
+        cand.className = "error-text";
+        
+        // Scroll to face verification section if it exists
+        const faceSection = document.getElementById('faceVerificationSection');
+        if (faceSection) {
+            faceSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+    }
+
     // Wait for config to load
     if (!configLoaded) {
         await loadConfig();
