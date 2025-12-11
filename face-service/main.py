@@ -53,6 +53,10 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+
 # CORS configuration - MUST be added FIRST before other middleware
 app.add_middleware(
     CORSMiddleware,
@@ -62,6 +66,15 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+# Serve static files (enroll.html)
+# This assumes enroll.html is in the same directory as main.py
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
+
+@app.get("/enroll.html")
+async def get_enroll_page():
+    return FileResponse(os.path.join(BASE_DIR, "enroll.html"))
 
 # Add rate limiter AFTER CORS
 app.state.limiter = limiter
