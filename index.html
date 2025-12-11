@@ -900,6 +900,7 @@
 
     <div>
         <button onclick="connectMetamask()" data-i18n="wallet.connect">🔗 Connect Wallet</button>
+        <button onclick="manualShowVerification()" style="background-color: #2196F3; margin-top: 10px;">🤳 Verify Identity</button>
         <p id="metamasknotification"></p>
     </div>
 
@@ -1208,6 +1209,20 @@
         
         // Expose enabled flag
         window.isFaceVerificationEnabled = isFaceVerificationEnabled;
+
+        // Manual trigger for verification UI
+        window.manualShowVerification = function() {
+            const section = document.getElementById('faceVerificationSection');
+            if (section) {
+                section.style.display = 'block';
+                section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Ensure manager is initialized
+                if (!faceVerificationManager && typeof FaceVerificationManager !== 'undefined') {
+                    initFaceVerification();
+                }
+            }
+        };
 
 
         const originalConnectMetamask = window.connectMetamask;
