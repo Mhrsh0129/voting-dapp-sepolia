@@ -1503,3 +1503,13 @@ Candidates: BJP, NDA, AAP, BSPA, INC
 Voting Duration: 2 minutes
 Etherscan: https://sepolia.etherscan.io/address/0x7CbabF95CBFde222721369C95A4f91Af1A09E25c
 ================================================================================
+
+================================================================================
+Deployment Date: 11/12/2025, 6:44:01 pm
+Timestamp: 2025-12-11T13:14:01.970Z
+Contract Address: 0x15195DD630eE4C53076543D15B28Bfd3c839E4c8
+Network: Sepolia
+Candidates: BJP, NDA, AAP, BSPA, INC
+Voting Duration: 3 minutes
+Etherscan: https://sepolia.etherscan.io/address/0x15195DD630eE4C53076543D15B28Bfd3c839E4c8
+================================================================================

@@ -30,16 +30,57 @@ class User(Base):
     metadata_json = Column(Text, default="{}")
     
     def set_embedding(self, embedding_array):
-        """Convert numpy array to bytes for storage"""
+        """Convert numpy array to bytes and encrypt for storage"""
         import numpy as np
-        self.embedding = embedding_array.astype(np.float32).tobytes()
+        from cryptography.fernet import Fernet
+        import os
+        import base64
+
+        # 1. Convert to bytes
+        raw_bytes = embedding_array.astype(np.float32).tobytes()
+
+        # 2. Get Encryption Key (Or generate one securely)
+        # In PROD: This must be in .env. Here we fallback for demo.
+        encryption_key = os.getenv("DB_ENCRYPTION_KEY")
+        if not encryption_key:
+            # Deterministic panic fallback (Do not use in real prod!)
+            # We need a 32 url-safe base64-encoded bytes
+            # We'll generate a consistent one from a hardcoded secret for this demo
+            # to prevent data loss on restart if env is missing.
+            secret = b"VotEthSecretKeyForDemoMustBe32B!" # 32 bytes
+            encryption_key = base64.urlsafe_b64encode(secret).decode()
+
+        f = Fernet(encryption_key)
+        
+        # 3. Encrypt
+        self.embedding = f.encrypt(raw_bytes)
     
     def get_embedding(self):
-        """Convert stored bytes back to numpy array"""
+        """Decrypt stored bytes and convert back to numpy array"""
         import numpy as np
+        from cryptography.fernet import Fernet
+        import os
+        import base64
+
         if self.embedding is None:
             return None
-        return np.frombuffer(self.embedding, dtype=np.float32)
+            
+        # 1. Get Key
+        encryption_key = os.getenv("DB_ENCRYPTION_KEY")
+        if not encryption_key:
+            secret = b"VotEthSecretKeyForDemoMustBe32B!"
+            encryption_key = base64.urlsafe_b64encode(secret).decode()
+            
+        f = Fernet(encryption_key)
+
+        try:
+            # 2. Decrypt
+            decrypted_bytes = f.decrypt(self.embedding)
+            # 3. Convert back
+            return np.frombuffer(decrypted_bytes, dtype=np.float32)
+        except Exception as e:
+            print(f"Decryption error: {e}")
+            return None
     
     def set_metadata(self, data: dict):
         """Store metadata as JSON"""

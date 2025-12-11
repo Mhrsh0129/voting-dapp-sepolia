@@ -449,9 +449,10 @@ async def verify_user(
                     
                     # Sign the hash (EIP-191)
                     # This corresponds to .toEthSignedMessageHash() in Solidity
-                    signable_message = encode_defunct(digest=msg_hash)
+                    # Fix: use primitive for raw bytes
+                    signable_message = encode_defunct(primitive=msg_hash)
                     signed_message = signer_account.sign_message(signable_message)
-                    signature = signed_message.signature.hex()
+                    signature = "0x" + signed_message.signature.hex()
                     logger.info(f"✍️  Signed voting permit for {data.user_id[:10]}...")
             except Exception as e:
                 logger.error(f"Signing failed: {e}")
