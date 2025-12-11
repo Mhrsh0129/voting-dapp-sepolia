@@ -41,6 +41,31 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Initialize Signer
+from eth_account import Account
+from eth_account.messages import encode_defunct
+from eth_utils import to_bytes, keccak
+import secrets
+
+# Try to get key from env, otherwise generate ephemeral one
+SIGNER_PRIVATE_KEY = os.getenv("SIGNER_PRIVATE_KEY")
+if not SIGNER_PRIVATE_KEY:
+    # Generate random key for demo/security
+    # Note: In production, this must be persistent in .env
+    priv = secrets.token_hex(32)
+    SIGNER_PRIVATE_KEY = "0x" + priv
+    logger.warning(f"⚠️  Using EPHEMERAL signer key: {SIGNER_PRIVATE_KEY}")
+    logger.warning("    (Refer to README to set this permanently in .env)")
+
+try:
+    signer_account = Account.from_key(SIGNER_PRIVATE_KEY)
+    SIGNER_ADDRESS = signer_account.address
+    logger.info(f"🔐 Verification Signer Active: {SIGNER_ADDRESS}")
+except Exception as e:
+    logger.error(f"❌ Failed to load signer key: {e}")
+    signer_account = None
+    SIGNER_ADDRESS = None
+
 # Initialize rate limiter
 limiter = Limiter(key_func=get_remote_address)
 
@@ -130,6 +155,7 @@ class VerifyResponse(BaseModel):
     similarity_score: float
     liveness_passed: bool
     token: Optional[str] = None
+    signature: Optional[str] = None
     expires_in_seconds: Optional[int] = None
     message: str
 
@@ -138,7 +164,10 @@ class HealthResponse(BaseModel):
     """Health check response"""
     status: str
     timestamp: str
+    status: str
+    timestamp: str
     version: str
+    signer_address: Optional[str] = None
 
 
 class UserStatusResponse(BaseModel):
@@ -181,7 +210,8 @@ async def root():
     return {
         "status": "online",
         "timestamp": datetime.utcnow().isoformat(),
-        "version": "1.0.0"
+        "version": "1.0.0", 
+        "signer_address": SIGNER_ADDRESS
     }
 
 
@@ -191,7 +221,8 @@ async def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
-        "version": "1.0.0"
+        "version": "1.0.0", 
+        "signer_address": SIGNER_ADDRESS
     }
 
 
@@ -405,6 +436,25 @@ async def verify_user(
         message = "Verification successful" if verified else f"Face match failed ({similarity:.1%} < {settings.similarity_threshold:.0%} required)"
         
         logger.info(f"{'✅' if verified else '❌'} Verification for {data.user_id[:10]}...: {similarity:.2%}")
+
+        # Generage on-chain signature if verified
+        signature = None
+        if verified and signer_account:
+            try:
+                # Create hash of the address (exactly as Solidity will do)
+                # Solidity: keccak256(abi.encodePacked(msg.sender))
+                if data.user_id.startswith("0x") and len(data.user_id) == 42:
+                    addr_bytes = to_bytes(hexstr=data.user_id)
+                    msg_hash = keccak(addr_bytes)
+                    
+                    # Sign the hash (EIP-191)
+                    # This corresponds to .toEthSignedMessageHash() in Solidity
+                    signable_message = encode_defunct(digest=msg_hash)
+                    signed_message = signer_account.sign_message(signable_message)
+                    signature = signed_message.signature.hex()
+                    logger.info(f"✍️  Signed voting permit for {data.user_id[:10]}...")
+            except Exception as e:
+                logger.error(f"Signing failed: {e}")
         
         return VerifyResponse(
             success=True,
@@ -412,6 +462,7 @@ async def verify_user(
             similarity_score=round(similarity * 100, 2),
             liveness_passed=liveness_passed,
             token=token,
+            signature=signature,
             expires_in_seconds=expires_in,
             message=message
         )

@@ -316,6 +316,9 @@ class FaceVerificationManager {
                 
                 // Store token for voting
                 localStorage.setItem('face_verification_token', result.token);
+                if (result.signature) {
+                    localStorage.setItem('voting_signature', result.signature);
+                }
                 localStorage.setItem('face_verification_expiry', this.tokenExpiry.toString());
                 
                 this.showResult('success', `
@@ -328,6 +331,7 @@ class FaceVerificationManager {
                 // Callback
                 this.onVerified({
                     token: result.token,
+                    signature: result.signature,
                     score: result.similarity_score,
                     expiresIn: result.expires_in_seconds
                 });

@@ -1,5 +1,5 @@
 let WALLET_CONNECTED = "";
-let contractAddress = "0x61F1d0760aeABB09BFdCF2594ed515725589e73e"; // Enhanced contract with new features
+let contractAddress = "0x7CbabF95CBFde222721369C95A4f91Af1A09E25c"; // Enhanced contract with new features
 window.contractAddress = contractAddress; // Expose to window for QR manager
 let currentElectionName = "Current Election"; // Track which election we're viewing
 let configLoaded = false; // Track if config has been loaded
@@ -219,9 +219,40 @@ let contractAbi = [
           "internalType": "uint256",
           "name": "_candidateIndex",
           "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
         }
       ],
       "name": "vote",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "verificationSigner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_signer",
+          "type": "address"
+        }
+      ],
+      "name": "setVerificationSigner",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -837,7 +868,14 @@ window.addVote = async() => {
             cand.innerHTML = '⏳ Submitting vote<span class="spinner"></span>';
             cand.className = "loading-text";
             
-            const tx = await contractInstance.vote(candidateIndex);
+            // Get verification signature if present
+            const signature = localStorage.getItem('voting_signature') || "0x";
+            
+            // Call vote with signature
+            // If the contract is old (no signature param), this might fail? 
+            // We should use check logic or try/catch fallback, but since we updated the contract code
+            // we assume the user will redeploy.
+            const tx = await contractInstance.vote(candidateIndex, signature);
             
             cand.innerHTML = '⏳ Confirming transaction<span class="spinner"></span>';
             await tx.wait();

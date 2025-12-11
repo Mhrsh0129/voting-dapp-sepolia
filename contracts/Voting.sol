@@ -4,8 +4,13 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 contract Voting is AccessControl, Pausable, ReentrancyGuard {
+    using ECDSA for bytes32;
+    using MessageHashUtils for bytes32;
+
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant ELECTION_MANAGER_ROLE = keccak256("ELECTION_MANAGER_ROLE");
 
@@ -22,6 +27,9 @@ contract Voting is AccessControl, Pausable, ReentrancyGuard {
     uint256 public votingEnd;
     uint256 public totalVotes;
     bool public voterRegistrationRequired;
+    
+    // Address of the authorized face verification server
+    address public verificationSigner;
 
     // Events for audit trail
     event VoteCast(address indexed voter, uint256 indexed candidateIndex, uint256 timestamp);
@@ -31,6 +39,7 @@ contract Voting is AccessControl, Pausable, ReentrancyGuard {
     event VotingPaused(address indexed admin, uint256 timestamp);
     event VotingUnpaused(address indexed admin, uint256 timestamp);
     event VotingTimesUpdated(uint256 newStart, uint256 newEnd, uint256 timestamp);
+    event VerificationSignerUpdated(address indexed newSigner, uint256 timestamp);
 
     constructor(string[] memory _candidateNames, uint256 _durationInMinutes) {
         for (uint256 i = 0; i < _candidateNames.length; i++) {
@@ -58,6 +67,12 @@ contract Voting is AccessControl, Pausable, ReentrancyGuard {
     modifier onlyElectionManager() {
         require(hasRole(ELECTION_MANAGER_ROLE, msg.sender), "Caller is not an election manager");
         _;
+    }
+
+    // Connect the Face Verification Service
+    function setVerificationSigner(address _signer) public onlyAdmin {
+        verificationSigner = _signer;
+        emit VerificationSignerUpdated(_signer, block.timestamp);
     }
 
     // Voter registration functions
@@ -95,7 +110,9 @@ contract Voting is AccessControl, Pausable, ReentrancyGuard {
         emit CandidateAdded(_name, candidates.length - 1, block.timestamp);
     }
 
-    function vote(uint256 _candidateIndex) public whenNotPaused nonReentrant {
+    // Modified vote function with Signature Verification
+    // Provide "0x" as signature if verificationSigner is not set (legacy mode)
+    function vote(uint256 _candidateIndex, bytes calldata signature) public whenNotPaused nonReentrant {
         require(!voters[msg.sender], "You have already voted");
         require(_candidateIndex < candidates.length, "Invalid candidate index");
         require(block.timestamp >= votingStart && block.timestamp < votingEnd, "Voting is not active");
@@ -103,6 +120,19 @@ contract Voting is AccessControl, Pausable, ReentrancyGuard {
         if (voterRegistrationRequired) {
             require(registeredVoters[msg.sender], "You are not registered to vote");
         }
+
+        // --- FACE VERIFICATION CHECK ---
+        if (verificationSigner != address(0)) {
+            require(signature.length > 0, "Face verification signature required");
+            
+            // Reconstruct the signed message: keccak256(address)
+            bytes32 messageHash = keccak256(abi.encodePacked(msg.sender));
+            bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
+            
+            address recoveredSigner = ethSignedMessageHash.recover(signature);
+            require(recoveredSigner == verificationSigner, "Invalid face verification signature");
+        }
+        // -------------------------------
 
         candidates[_candidateIndex].voteCount++;
         voters[msg.sender] = true;
